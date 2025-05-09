@@ -1,3 +1,5 @@
+package src.Resource;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -26,7 +28,8 @@ public class InfinityMemberUI extends JFrame {
     }
 
     private void loadAllMembers() {
-        String basePath = "C:\\Users\\LENOVO\\OneDrive\\Documents\\Infinity Java Swing\\Image";
+        String basePath = "Image/"; // Path relatif ke folder Image
+        
         String[][] members = {
             {"Angel", "Angel.png", "President"},
             {"Kellen", "Kellen.png", "Vice President"},
@@ -69,11 +72,12 @@ public class InfinityMemberUI extends JFrame {
             characterGrid.add(new MemberCard(newMember));
             characterGrid.revalidate();
         } catch (Exception e) {
+            System.err.println("Error loading member: " + name);
             characterGrid.add(new MemberCard(new Member(name, "", status)));
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         SwingUtilities.invokeLater(() -> {
             InfinityMemberUI ui = new InfinityMemberUI();
             ui.setLocationRelativeTo(null);
