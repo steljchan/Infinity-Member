@@ -1,9 +1,10 @@
 package src.Resource;
-import java.util.ArrayList;
-import java.util.List;
+
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MemberManager {
-    private List<Member> members = new ArrayList<>();
+    private final List<Member> members = new CopyOnWriteArrayList<>();
 
     public void addMember(Member member) {
         members.add(member);
@@ -11,5 +12,11 @@ public class MemberManager {
 
     public List<Member> getMembers() {
         return new ArrayList<>(members);
+    }
+
+    public Optional<Member> getMemberByName(String name) {
+        return members.stream()
+            .filter(m -> m.getName().equalsIgnoreCase(name))
+            .findFirst();
     }
 }

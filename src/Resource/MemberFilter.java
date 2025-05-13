@@ -1,109 +1,64 @@
 package src.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class MemberFilter {
-
     public enum FilterCategory {
-        A_TO_Z,
-        IMT,
-        VCD,
-        MAN,
-        HOD,
-        KOOR,
-        MEDIA,
-        ACD,
-        MALE,
-        FEMALE
+        IMT, VCD, MAN, HOD, KOOR, EVENT, MEDIA, ACD, MALE, FEMALE
     }
+
+    private static final Map<FilterCategory, Set<String>> FILTER_MAPPING = Map.ofEntries(
+        Map.entry(FilterCategory.IMT, Set.of("Abel", "Stella")),
+        Map.entry(FilterCategory.VCD, Set.of("Clarice", "Lisa", "Audrey")),
+        Map.entry(FilterCategory.HOD, Set.of("Angel", "Kellen", "Isel", "Apin", "Deline", "Ceje")),
+        Map.entry(FilterCategory.KOOR, Set.of("Lavi", "Nikho", "Audrey")),
+        Map.entry(FilterCategory.MEDIA, Set.of("Opet", "Erika", "Regina", "Clarice", "Audrey", "Lisa")),
+        Map.entry(FilterCategory.ACD, Set.of("Nathan")),
+        Map.entry(FilterCategory.EVENT, Set.of(
+            "Nikho", "Lavi", "Stella", "Abel", "Alfain", "Arya",
+            "Ayesha", "Chelsea", "Edrick", "Cia", "Rafif",
+            "Reski", "Sisi", "Wellson")),
+        Map.entry(FilterCategory.MALE, Set.of(
+            "Alfain", "Abel", "Apin", "Kellen", "Wellson",
+            "Rafif", "Reski", "Edrick", "Arya", "Nathan", "Nikho", "Opet"))
+    );
 
     public static List<Member> filterMembers(List<Member> members, FilterCategory category) {
-        List<Member> filtered = new ArrayList<>();
-
-        switch (category) {
-            case A_TO_Z:
-                filtered.addAll(members);
-                Collections.sort(filtered, Comparator.comparing(m -> m.getName().toLowerCase()));
-                break;
-                
-            case IMT:
-                filtered.addAll(filterByNames(members, "Abel", "Stella"));
-                break;
-                
-            case VCD:
-                filtered.addAll(filterByNames(members, "Clarice", "Lisa", "Audrey"));
-                break;
-                
-            case MAN:
-                filtered.addAll(getRemainingMembers(members, 
-                    List.of("Abel", "Stella", "Clarice", "Lisa", "Audrey")));
-                break;
-                
-            case HOD:
-                filtered.addAll(filterByNames(members, 
-                    "Angel", "Kellen", "Isel", "Apin", "Deline", "Ceje"));
-                break;
-                
-            case KOOR:
-                filtered.addAll(filterByNames(members, "Lavi", "Nikho", "Audrey"));
-                break;
-                
-            case MEDIA:
-                filtered.addAll(filterByNames(members, 
-                    "Opet", "Erika", "Regina", "Clarice", "Audrey", "Lisa"));
-                break;
-                
-            case ACD:
-                filtered.addAll(filterByNames(members, "Nathan"));
-                // Add event members if any
-                break;
-                
-            case MALE:
-                filtered.addAll(filterByNames(members, 
-                    "Alfain", "Abel", "Apin", "Kellen", "Wellson", 
-                    "Rafif", "Reski", "Edrick", "Arya", "Nathan"));
-                break;
-                
-            case FEMALE:
-                List<String> maleNames = List.of(
-                    "Alfain", "Abel", "Apin", "Kellen", "Wellson", 
-                    "Rafif", "Reski", "Edrick", "Arya", "Nathan");
-                filtered.addAll(getRemainingMembers(members, maleNames));
-                break;
+        if (members == null || members.isEmpty()) {
+            return Collections.emptyList();
         }
 
-        return filtered;
+        return switch (category) {
+            case FEMALE -> filterFemaleMembers(members);
+            case MAN -> filterManagementMembers(members);
+            default -> filterByCategory(members, category);
+        };
     }
 
-    private static List<Member> filterByNames(List<Member> members, String... names) {
-        List<Member> result = new ArrayList<>();
-        for (Member member : members) {
-            for (String name : names) {
-                if (member.getName().equalsIgnoreCase(name)) {
-                    result.add(member);
-                    break;
-                }
-            }
-        }
-        return result;
+    private static List<Member> filterFemaleMembers(List<Member> members) {
+        Set<String> males = FILTER_MAPPING.get(FilterCategory.MALE);
+        return members.stream()
+            .filter(m -> !males.contains(m.getName()))
+            .collect(Collectors.toList());
     }
 
-    private static List<Member> getRemainingMembers(List<Member> members, List<String> excludedNames) {
-        List<Member> result = new ArrayList<>();
-        for (Member member : members) {
-            boolean isExcluded = false;
-            for (String name : excludedNames) {
-                if (member.getName().equalsIgnoreCase(name)) {
-                    isExcluded = true;
-                    break;
-                }
-            }
-            if (!isExcluded) {
-                result.add(member);
-            }
-        }
-        return result;
+    private static List<Member> filterManagementMembers(List<Member> members) {
+        Set<String> excludedNames = new HashSet<>();
+        excludedNames.addAll(FILTER_MAPPING.getOrDefault(FilterCategory.IMT, Collections.emptySet()));
+        excludedNames.addAll(FILTER_MAPPING.getOrDefault(FilterCategory.VCD, Collections.emptySet()));
+    
+        return members.stream()
+            .filter(m -> !excludedNames.contains(m.getName()))
+            .collect(Collectors.toList());
+    }
+    
+    
+
+    private static List<Member> filterByCategory(List<Member> members, FilterCategory category) {
+        Set<String> names = FILTER_MAPPING.getOrDefault(category, Collections.emptySet());
+        return members.stream()
+            .filter(m -> names.contains(m.getName()))
+            .collect(Collectors.toList());
     }
 }
