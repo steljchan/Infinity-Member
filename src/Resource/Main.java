@@ -7,10 +7,18 @@ import java.util.List;
 public class Main extends JFrame {
     private final MemberManager memberManager = new MemberManager();
     private final CharacterGridPanel characterGrid = new CharacterGridPanel();
+    private final JButton resetButton = new JButton("Reset");
 
     public Main() {
-        initializeUI();
-        loadAllMembers();
+        try {
+            initializeUI();
+            loadAllMembers();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, 
+                "Failed to initialize: " + e.getMessage(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
+            System.exit(1);
+        }
     }
 
     private void initializeUI() {
@@ -20,14 +28,43 @@ public class Main extends JFrame {
         setLayout(new BorderLayout());
         getContentPane().setBackground(Color.WHITE);
         setUndecorated(true);
+        setLocationRelativeTo(null);
 
+        // Setup navbar
         add(new CustomNavbar(this), BorderLayout.NORTH);
-        add(new SidebarPanel(this::handleFilter), BorderLayout.WEST);
 
+        // Setup sidebar with filter options
+        JPanel sidebarPanel = new SidebarPanel(this::handleFilter);
+        configureResetButton();
+        sidebarPanel.add(resetButton);
+        add(sidebarPanel, BorderLayout.WEST);
+
+        // Setup main content area with scroll
         JScrollPane scrollPane = new JScrollPane(characterGrid);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         add(scrollPane, BorderLayout.CENTER);
+    }
+
+    private void configureResetButton() {
+        resetButton.addActionListener(e -> {
+            characterGrid.resetFilter();
+            // Immediately scroll to top-left
+            SwingUtilities.invokeLater(() -> {
+                JScrollPane scrollPane = getScrollPane();
+                scrollPane.getVerticalScrollBar().setValue(0);
+                scrollPane.getHorizontalScrollBar().setValue(0);
+            });
+        });
+        resetButton.setBackground(new Color(220, 220, 220));
+        resetButton.setFocusPainted(false);
+        resetButton.setPreferredSize(new Dimension(100, 30));
+    }
+
+    private JScrollPane getScrollPane() {
+        return (JScrollPane) ((BorderLayout) getContentPane().getLayout())
+            .getLayoutComponent(BorderLayout.CENTER);
     }
 
     private void loadAllMembers() {
@@ -62,16 +99,18 @@ public class Main extends JFrame {
         };
 
         for (String[] data : membersData) {
-            addMember(data[0], "Image/" + data[1], data[2], data[3]);
+            addMember(data[0], data[1], data[2], data[3]);
         }
     }
 
-    private void addMember(String name, String imagePath, String status, String major) {
+    private void addMember(String name, String imageName, String status, String major) {
         try {
+            String imagePath = "Image/" + imageName;
             Member member = new Member(name, imagePath, status, major);
             memberManager.addMember(member);
-            characterGrid.addMemberCard(new MemberCard(member)); 
+            characterGrid.addMemberCard(new MemberCard(member));
         } catch (Exception e) {
+            System.err.println("Error adding member: " + name);
             Member fallbackMember = new Member(name, "", status, major);
             characterGrid.addMemberCard(new MemberCard(fallbackMember));
         }
@@ -79,16 +118,19 @@ public class Main extends JFrame {
 
     private void handleFilter(MemberFilter.FilterCategory category) {
         SwingUtilities.invokeLater(() -> {
-            List<Member> filteredMembers = MemberFilter.filterMembers(memberManager.getMembers(), category);
-            characterGrid.updateFilter(filteredMembers);
+            try {
+                List<Member> filteredMembers = MemberFilter.filterMembers(
+                    memberManager.getMembers(), category);
+                characterGrid.updateFilter(filteredMembers);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this,
+                    "Filter error: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            }
         });
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            Main app = new Main();
-            app.setLocationRelativeTo(null);
-            app.setVisible(true);
-        });
+        SwingUtilities.invokeLater(() -> new Main().setVisible(true));
     }
 }

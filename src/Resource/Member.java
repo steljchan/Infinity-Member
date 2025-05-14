@@ -4,21 +4,13 @@ public class Member {
     private final String name;
     private final String imagePath;
     private final String status;
-    private final String major; // Tambahkan field major
+    private final String major;
 
     public Member(String name, String imagePath, String status, String major) {
-        if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Name cannot be empty");
-        }
-        this.name = name;
+        this.name = (name == null || name.trim().isEmpty()) ? "Unknown" : name.trim();
         this.imagePath = imagePath != null ? imagePath : "";
         this.status = status != null ? status : "";
-        this.major = major != null ? major : ""; // Inisialisasi major
-    }
-
-    // Constructor tambahan untuk kompatibilitas
-    public Member(String name, String imagePath, String status) {
-        this(name, imagePath, status, "");
+        this.major = major != null ? major : "";
     }
 
     // Getter methods
@@ -27,7 +19,6 @@ public class Member {
     public String getStatus() { return status; }
     public String getMajor() { return major; }
 
-    // Equality based on name (case-insensitive)
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -46,7 +37,6 @@ public class Member {
         return "Member{name='" + name + "', status='" + status + "', major='" + major + "'}";
     }
 
-    // Builder Pattern
     public static class Builder {
         private String name;
         private String imagePath = "";
